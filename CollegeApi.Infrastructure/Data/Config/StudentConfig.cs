@@ -1,0 +1,32 @@
+using CollegeApi.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace CollegeApi.Infrastructure.Data.Config
+{
+    public class StudentConfig : IEntityTypeConfiguration<Student>
+    {
+        public void Configure(EntityTypeBuilder<Student> builder)
+        {
+            builder.ToTable("students");
+            builder.HasKey(t => t.Id);
+
+            builder.Property(x=>x.Id).UseIdentityColumn();
+
+            builder.Property(n => n.Studentname).IsRequired().HasMaxLength(250);
+            builder.Property(n => n.Address).IsRequired(false).HasMaxLength(500);
+            builder.Property(n => n.Email).IsRequired().HasMaxLength(250);
+
+            builder.HasData(new List<Student>()
+            {
+                new Student { Id = 1, Studentname="Aryan",Email="aryan@gmail.com",DOB=new DateTime(2004,9,3)},
+                 new Student { Id = 2, Studentname="kartik",Email="k@gmail.com",DOB=new DateTime(2004,9,3)}
+            });
+
+
+
+            //forigen key configuration in student table
+            builder.HasOne(n=>n.Department).WithMany(n=>n.Students).HasForeignKey(n=>n.DepartmentId).HasConstraintName("FK_Students_Department");
+        }
+    }
+}
