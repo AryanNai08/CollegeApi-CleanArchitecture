@@ -1,7 +1,9 @@
 using CollegeApi.Application;
 using CollegeApi.Application.Mappings;
 using CollegeApi.Infrastructure;
+using CollegeApi.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -21,6 +23,8 @@ Log.Logger = new LoggerConfiguration()
 //use this line to override the built-in logger
 //builder.Host.UseSerilog();
 
+//register the middleware
+builder.Services.AddTransient<ExceptionMiddleware>();
 
 
 // Add Clean Architecture layers
@@ -175,7 +179,18 @@ builder.Services.AddAuthentication(options =>
 });
 
 
+
+
+
+
+
+
+
 var app = builder.Build();
+
+
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 // 🔵 Enable Swagger only in development (best practice)
 if (app.Environment.IsDevelopment())

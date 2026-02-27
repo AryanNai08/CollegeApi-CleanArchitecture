@@ -2,6 +2,7 @@ using AutoMapper;
 using CollegeApi.Application.DTOs;
 using CollegeApi.Application.Interfaces;
 using CollegeApi.Domain.Entities;
+using CollegeApi.Domain.Exceptions;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Cryptography;
 
@@ -75,19 +76,48 @@ namespace CollegeApi.Application.Services
         {
             var users = await _userRepository.GetAllByFilterAsync(u => !u.IsDeleted);
 
+            if (users == null)
+            {
+                throw new NotFoundException($"Table is empty");
+            }
+
             return _mapper.Map<List<UserReadonlyDTO>>(users);
         }
 
         public async Task<UserReadonlyDTO> GetUserByIdAsync(int id)
         {
+
+            if (id <= 0 || id==null)
+            {
+                throw new BadRequestException($"Id is required and it should be greater than 0");
+            }
+
             var user = await _userRepository.GetAsync(u => !u.IsDeleted && u.Id == id);
+
+            
+
+            if (user ==null) {
+                throw new NotFoundException($"User not found");
+            }
 
             return _mapper.Map<UserReadonlyDTO>(user);
         }
 
         public async Task<UserReadonlyDTO> GetUserByUsernameAsync(string username)
         {
+
+            if (string.IsNullOrEmpty(username))
+            {
+                throw new BadRequestException("Name must not be empty");
+            } 
+
             var user = await _userRepository.GetAsync(u => !u.IsDeleted && u.Username.Equals(username));
+
+           
+                if (user == null)
+            {
+                throw new NotFoundException($"User not found with name:{username}");
+            }
 
             return _mapper.Map<UserReadonlyDTO>(user);
         }
@@ -96,10 +126,37 @@ namespace CollegeApi.Application.Services
         {
             ArgumentNullException.ThrowIfNull(dto, nameof(dto));
 
+            //if(dto==null || dto.Id <= 0)
+            //{
+            //    throw new BadRequestException("all field data is needed to update the record");
+            //}
+
+            if(string.IsNullOrEmpty(dto.Username))
+            {
+                throw new BadRequestException("Username is required");
+            }
+
+            if (string.IsNullOrEmpty(dto.Password))
+            {
+                throw new BadRequestException("password is required");
+            }
+
+
+            if (dto.Id<=0 || dto.Id == null)
+            {
+                throw new BadRequestException("Id is required and is must be greater than 0");
+            }
+
+            if (dto.UserTypeId <= 0 || dto.UserTypeId == null)
+            {
+                throw new BadRequestException("UserTypeId is required and is must be greater than 0");
+            }
+
+
             var existingUser = await _userRepository.GetAsync(u => !u.IsDeleted && u.Id == dto.Id, true);
             if (existingUser == null)
             {
-                throw new Exception($"User not found with the id: {dto.Id}");
+                throw new NotFoundException($"User not found with the id: {dto.Id}");
             }
 
             var userToUpdate = _mapper.Map<User>(dto);
@@ -121,15 +178,15 @@ namespace CollegeApi.Application.Services
             return true;
         }
 
-        public async Task<bool> DeleteUserAsync(int userId)
+        public async Task<bool> DeleteUserAsync(int? userId)
         {
-            if (userId <= 0)
-                throw new ArgumentException(nameof(userId));
+            if (userId <= 0 || userId==null)
+                throw new BadRequestException("userid is required and it must be greater than 0");
 
             var existingUser = await _userRepository.GetAsync(u => !u.IsDeleted && u.Id == userId, true);
             if (existingUser == null)
             {
-                throw new Exception($"User not found with the id: {userId}");
+                throw new NotFoundException($"User not found with the id: {userId}");
             }
 
             //1. Hard delete - you can try this-delete record from table 

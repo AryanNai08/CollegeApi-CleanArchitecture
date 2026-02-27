@@ -277,7 +277,10 @@ namespace CollegeApi.Controllers
             {
                 _apiResponse.Status = false;
                 _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
-                _apiResponse.Error.Add(ex.Message);
+                //_apiResponse.Error.Add(ex.Message);
+                //return _apiResponse;
+
+                _apiResponse.Error = new List<string> { ex.Message };
                 return _apiResponse;
             }
         }
